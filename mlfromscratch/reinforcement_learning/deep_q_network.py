@@ -25,7 +25,7 @@ class DeepQNetwork():
     min_epsilon: float
         The value which epsilon will approach as the training progresses.
     """
-    def __init__(self, env_name='CartPole-v1', epsilon=1, gamma=0.9, decay_rate=0.005, min_epsilon=0.1):
+    def __init__(self, env, n_actions, n_states, epsilon=1, gamma=0.9, decay_rate=0.005, min_epsilon=0.1):
         self.epsilon = epsilon
         self.gamma = gamma
         self.decay_rate = decay_rate
@@ -34,15 +34,15 @@ class DeepQNetwork():
         self.memory = []
 
         # Initialize the environment
-        self.env = gym.make(env_name)
-        self.n_states = self.env.observation_space.shape[0]
-        self.n_actions = self.env.action_space.n
+        self.env = env
+        self.n_states = n_states
+        self.n_actions = n_actions
     
     def set_model(self, model):
         self.model = model(n_inputs=self.n_states, n_outputs=self.n_actions)
 
-    def _select_action(self, state):
-        if np.random.rand() < self.epsilon:
+    def _select_action(self, state, test_mode=False):
+        if (np.random.rand() < self.epsilon) and test_mode==False:
             # Choose action randomly
             action = np.random.randint(self.n_actions)
         else:
@@ -121,7 +121,7 @@ class DeepQNetwork():
             epoch_loss = np.mean(epoch_loss)
 
             # Reduce the epsilon parameter
-            self.epsilon = self.min_epsilon + (1.0 - self.min_epsilon) * np.exp(-self.decay_rate * epoch)
+            self.epsilon = self.min_epsilon + (self.epsilon - self.min_epsilon) * np.exp(-self.decay_rate * epoch)
             
             max_reward = max(max_reward, total_reward)
 
